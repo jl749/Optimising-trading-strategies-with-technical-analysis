@@ -10,7 +10,7 @@ public class Main {
 			e.printStackTrace(System.out);
 		}
 		trader.prepare();
-		System.out.println(trader.trade());
+		//System.out.println(trader.trade());
 	}
 
 }
