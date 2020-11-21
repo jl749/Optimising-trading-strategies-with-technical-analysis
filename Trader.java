@@ -37,7 +37,7 @@ public class Trader
     private static final double TBR_THRESHOLD=-0.02;
     private static final double VOL_THRESHOLD=0.02;
     private static final double MOM_THRESHOLD=0;
-    private static final double MUTATION_PROB=0.3;
+    private static final double MUTATION_PROB=0.5;
     
     DecimalFormat df=new DecimalFormat("###.##"); //to round decimal
     
@@ -54,10 +54,11 @@ public class Trader
         }
         data = lines.toArray(data);
     }
+    
     private void arrcpy(double[][] des,double[][] source) {
     	for(int i=0;i<des.length;i++)
-    		  for(int j=0;j<source[0].length;j++)
-    		    des[i][j]=source[i][j];
+    		for(int j=0;j<source[0].length;j++)
+    			des[i][j]=source[i][j];
     }
     
     /*start GA*/
@@ -69,25 +70,30 @@ public class Trader
     		initpopulation();
     		
     		evaluate();
+
     		double[][][] newGenGroup=new double[POPULATION_SIZE][PATTERN_LEN][4];
+    		double[][] tmp=new double[PATTERN_LEN][4];;
+    		
     		for(int g=1;g<=MAX_GEN;g++) {
     			System.out.print("<GEN "+g+"> ");
     			int bestIndex=0;
+
+    			//if(Arrays.deepEquals(tmp,population[0]))
+    			
                 for(int i=1;i<POPULATION_SIZE;i++) {
                 	if(fitness[bestIndex]<fitness[i])
                 		bestIndex=i;
                 }
                 System.out.println("best fitness= "+df.format(fitness[bestIndex]));
-                
                 //elitism
-                arrcpy(newGenGroup[0],population[bestIndex]);
+                arrcpy(tmp,population[bestIndex]);
                 
                 for(int i=1;i<POPULATION_SIZE;i++) {
                 	double which=Math.random();
             		if(which>=MUTATION_PROB) {
             			double[][][] offsprings=crossover(select(),select());
             			for(int j=0;j<2 && i+j<POPULATION_SIZE;j++) 
-                			newGenGroup[i+j]=offsprings[j];
+            				newGenGroup[i+j]=offsprings[j];
             			i++;
             		}else{
             			double[][] offspring=mutation(select());
@@ -96,14 +102,15 @@ public class Trader
             	}
                 
                 population=newGenGroup;
-                //for(int i=0;i<POPULATION_SIZE;i++) 
-                	//for(int j=0;j<PATTERN_LEN;j++) 
-                		//for(int k=0;k<4;k++) 
-                			//population[i][j][k]=newGenGroup[i][j][k];
+//                for(int i=0;i<POPULATION_SIZE;i++) 
+//                	for(int j=0;j<PATTERN_LEN;j++) 
+//                		for(int k=0;k<4;k++) 
+//                			population[i][j][k]=newGenGroup[i][j][k];
                 
-                System.out.println("bestIndex = "+bestIndex);
-                System.out.println(fitness[bestIndex]+Arrays.toString(fitness));
-                evaluate(); //update fitness -> update select()                
+                arrcpy(population[0],tmp);
+                //System.out.println("bestIndex = "+bestIndex);
+                //System.out.println(fitness[bestIndex]+Arrays.toString(fitness));
+                evaluate(); //update fitness -> update select()     
     		}
     	}catch(IOException e) {
     		e.printStackTrace(System.out);
@@ -214,22 +221,22 @@ public class Trader
     	}System.out.println("");
     }
     /*Simulate trade*/
-    private double trade(double arr[][],double budget) { //weight[4]
+    public double trade(double arr[][],double budget) {
     	double[] count={0,0,0}; //[HOLD,BUY,SELL]
-    	
+    	double bank=budget;
     	for(int i=28;i<data.length;i++) { // all signals calculated from index 28 (sufficient information)
     		int[] signals=new int[4];
     		for(int j=0;j<4;j++) 
     			signals[j]=(int) data[i][j+6];
     		int weightIndex=findIndex(signals);
     		
-    		for(int j=6;j<10;j++) { //fill count[]
-    			if(data[i][j]==0)
-    				count[0]+=arr[weightIndex][j-6]; // 0 1 2 3
-    			else if(data[i][j]==1)
-    				count[1]+=arr[weightIndex][j-6];
-    			else if(data[i][j]==2)
-    				count[2]+=arr[weightIndex][j-6];
+    		for(int j=0;j<4;j++) { //fill count[]
+    			if(signals[j]==0)
+    				count[0]+=arr[weightIndex][j]; // 0 1 2 3
+    			else if(signals[j]==1)
+    				count[1]+=arr[weightIndex][j];
+    			else if(signals[j]==2)
+    				count[2]+=arr[weightIndex][j];
     		}
     		
     		double max=0;	int action=0; 
@@ -239,18 +246,20 @@ public class Trader
         			action=j;
         		}
     		
-    		if(action==1 && budget>data[i][0]) {
+       		if(action==1 && bank>=data[i][0]) {
         		portfolio+=1;
-        		budget-=data[i][0]*1;
+        		bank-=data[i][0]*1;
         	}else if(action==2) {
-        		budget+=portfolio*data[i][0];
+        		bank+=portfolio*data[i][0];
         		portfolio=0;
         	}
     	}
         
+    	double totalOutput=bank + (portfolio * data[data.length - 1][0]);
+    	portfolio=0;
         // return the total amount (cash) after the trading session,
         // assuming that any stock is sold at the last known closing price
-        return budget + (portfolio * data[data.length - 1][0]);
+        return totalOutput;
     }
     private int findIndex(int[] signals) { // AABC-AAAA =5
     	int sum=0;
@@ -261,6 +270,7 @@ public class Trader
     }
     
     /*INIT population*/
+    
     private void initpopulation() {
     	for(int i=0;i<POPULATION_SIZE;i++) 
     		for(int j=0;j<PATTERN_LEN;j++) {
@@ -272,6 +282,7 @@ public class Trader
     			population[i][j]=tmp;
     		}
     }
+    
 
     private void fillpatternFreq() {
     	for(int i=28;i<data.length;i++) { // all signals calculated from index 28 (sufficient information)
