@@ -22,8 +22,9 @@ public class Trader
      */
     private double[][] data = new double[0][0];
     
-    private static final int MAX_GEN=100;
-    private static final int POPULATION_SIZE = 500;
+    private static final int MAX_GEN=200;
+    private static final int POPULATION_SIZE=1000;
+    private static final int T_SIZE=(int)(POPULATION_SIZE*0.2); //around 20% of POP SIZE
     private static final int PATTERN_LEN = (int) Math.pow(3, 4);
     private double[][][] population=new double[POPULATION_SIZE][PATTERN_LEN][4];
     private double[] fitness = new double[POPULATION_SIZE];
@@ -32,13 +33,13 @@ public class Trader
     /*Initial budget.*/
     private double budget = 3000;
     /*(empty) initial portfolio.*/
-    private int portfolio = 0;
     
     private static final double TBR_THRESHOLD=-0.02;
     private static final double VOL_THRESHOLD=0.02;
     private static final double MOM_THRESHOLD=0;
-    private static final double MUTATION_PROB=0.5;
+    private static final double MUTATION_PROB=0.1;
     
+    Random rnd=new Random();
     DecimalFormat df=new DecimalFormat("###.##"); //to round decimal
     
     /*read txt file*/
@@ -73,10 +74,11 @@ public class Trader
 
     		double[][][] newGenGroup=new double[POPULATION_SIZE][PATTERN_LEN][4];
     		double[][] tmp=new double[PATTERN_LEN][4];;
-    		
+
+    		int bestIndex=-1;
     		for(int g=1;g<=MAX_GEN;g++) {
     			System.out.print("<GEN "+g+"> ");
-    			int bestIndex=0;
+    			bestIndex=0;
 
     			//if(Arrays.deepEquals(tmp,population[0]))
     			
@@ -91,7 +93,12 @@ public class Trader
                 for(int i=1;i<POPULATION_SIZE;i++) {
                 	double which=Math.random();
             		if(which>=MUTATION_PROB) {
-            			double[][][] offsprings=crossover(select(),select());
+            			int p1Index=-1,p2Index=-1;
+            			while(p1Index==p2Index) {
+            				p1Index=select();
+            				p2Index=select();
+            			}
+            			double[][][] offsprings=crossover(p1Index,p2Index);
             			for(int j=0;j<2 && i+j<POPULATION_SIZE;j++) 
             				newGenGroup[i+j]=offsprings[j];
             			i++;
@@ -109,9 +116,11 @@ public class Trader
                 
                 arrcpy(population[0],tmp);
                 //System.out.println("bestIndex = "+bestIndex);
-                //System.out.println(fitness[bestIndex]+Arrays.toString(fitness));
-                evaluate(); //update fitness -> update select()     
+                System.out.println(fitness[bestIndex]+Arrays.toString(fitness));
+                evaluate(); //update fitness -> update select()
     		}
+    		System.out.println("BEST INDIVIDUAL:");
+    		System.out.println(Arrays.deepToString(population[bestIndex]));
     	}catch(IOException e) {
     		e.printStackTrace(System.out);
     	}
@@ -119,27 +128,19 @@ public class Trader
     
     /*Roulette selection*/
     private int select() {
-        double[] roulette=new double[POPULATION_SIZE];
-        double total=0;   
-        for(int i=0;i<POPULATION_SIZE;i++) 
-            total+=fitness[i];
-            
-        double cum=0;  
-        for(int i=0;i<POPULATION_SIZE;i++) {
-            roulette[i]=cum+(fitness[i]/total);
-            cum=roulette[i];
-        }
-        roulette[POPULATION_SIZE-1]=1; //in case of rounding error
-        
-        double prob=Math.random();
-        int selectedIndex=-1;
-        for (int i=0;i<POPULATION_SIZE;i++) 
-            if (prob<=roulette[i]) {
-            	selectedIndex=i;
-                break;
-            }
-
-        return selectedIndex;
+    	Set<Integer> arena=new HashSet<Integer>();
+            		
+    	while(arena.size()<T_SIZE) {
+    		int index=(int)(rnd.nextDouble()*POPULATION_SIZE);
+    		arena.add(index);
+    	}
+    	
+    	int winner=arena.iterator().next();
+    	for(int a:arena) 
+    		if(fitness[winner]<fitness[a])
+    			winner=a;
+    	
+    	return winner;
     }
     
     private double[][] mutation(int pIndex){
@@ -168,22 +169,19 @@ public class Trader
         }
         roulette[validIndexes.size()-1]=1; //in case of rounding error
 
-        /**Quarter of valid genes mutate*/
-        for(int i=0;i<validIndexes.size()/2;i++) {
+        /**upto 10% of valid genes mutate*/
+        for(int i=0;i<validIndexes.size()*0.1;i++) {
         	/**Select gene to mutate*/
-        	Random rnd1=new Random(System.currentTimeMillis()); //rnd with seed
-        	double prob=rnd1.nextDouble();
+        	double prob=rnd.nextDouble();
         	int selectedIndex=-1;
         	for (int j=0;j<validIndexes.size();j++) 
         		if (prob<=roulette[j]) {
-        			selectedIndex=validIndexes.get(j);
+        			selectedIndex=validIndexes.get(j); //select pattern to mutate (0121? 1220? 2001?)
         			break;
         		}
         	
-        	for(int j=0;j<4;j++) { 
-        		Random rnd2=new Random(System.currentTimeMillis());
-        		offspring[selectedIndex][j]=rnd2.nextDouble();
-        	}
+        	for(int j=0;j<4 ;j++) 
+        		offspring[selectedIndex][j]=rnd.nextDouble();
         }
 
     	return offspring;
@@ -221,9 +219,9 @@ public class Trader
     	}System.out.println("");
     }
     /*Simulate trade*/
-    public double trade(double arr[][],double budget) {
+    private double trade(double arr[][],double budget) {
     	double[] count={0,0,0}; //[HOLD,BUY,SELL]
-    	double bank=budget;
+    	double bank=budget;		int portfolio = 0;
     	for(int i=28;i<data.length;i++) { // all signals calculated from index 28 (sufficient information)
     		int[] signals=new int[4];
     		for(int j=0;j<4;j++) 
@@ -249,14 +247,13 @@ public class Trader
        		if(action==1 && bank>=data[i][0]) {
         		portfolio+=1;
         		bank-=data[i][0]*1;
-        	}else if(action==2) {
-        		bank+=portfolio*data[i][0];
-        		portfolio=0;
+        	}else if(action==2 && portfolio>0) {
+        		bank+=data[i][0];
+        		portfolio--;
         	}
     	}
         
     	double totalOutput=bank + (portfolio * data[data.length - 1][0]);
-    	portfolio=0;
         // return the total amount (cash) after the trading session,
         // assuming that any stock is sold at the last known closing price
         return totalOutput;
@@ -278,7 +275,7 @@ public class Trader
     				continue;
     			double[] tmp=new double[4];
     			for(int k=0;k<4;k++)
-    				tmp[k]=Double.parseDouble(df.format(Math.random()));
+    				tmp[k]=Math.random();
     			population[i][j]=tmp;
     		}
     }
