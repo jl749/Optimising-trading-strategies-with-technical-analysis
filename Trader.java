@@ -64,66 +64,56 @@ public class Trader
     
     /*start GA*/
     public void run() {
-    	try {
-    		load("Unilever.txt");
-    		prepare();	
-    		fillpatternFreq();
-    		initpopulation();
+    	prepare();	
+    	fillpatternFreq();
+    	initpopulation();
     		
-    		evaluate();
+    	evaluate();
 
-    		double[][][] newGenGroup=new double[POPULATION_SIZE][PATTERN_LEN][4];
-    		double[][] tmp=new double[PATTERN_LEN][4];;
+    	double[][][] newGenGroup=new double[POPULATION_SIZE][PATTERN_LEN][4];
+    	double[][] tmp=new double[PATTERN_LEN][4];
 
-    		int bestIndex=-1;
-    		for(int g=1;g<=MAX_GEN;g++) {
-    			System.out.print("<GEN "+g+"> ");
-    			bestIndex=0;
+    	int bestIndex=-1;
+    	for(int g=1;g<=MAX_GEN;g++) {
+    		System.out.print("<GEN "+g+"> ");
+    		bestIndex=0;
 
-    			//if(Arrays.deepEquals(tmp,population[0]))
+    		//if(Arrays.deepEquals(tmp,population[0]))
     			
-                for(int i=1;i<POPULATION_SIZE;i++) {
-                	if(fitness[bestIndex]<fitness[i])
-                		bestIndex=i;
-                }
-                System.out.println("best fitness= "+df.format(fitness[bestIndex]));
-                //elitism
-                arrcpy(tmp,population[bestIndex]);
+            for(int i=1;i<POPULATION_SIZE;i++) 
+               	if(fitness[bestIndex]<fitness[i])
+               		bestIndex=i;
+            System.out.println("best fitness= "+df.format(fitness[bestIndex]));
+            //elitism
+            arrcpy(tmp,population[bestIndex]);
                 
-                for(int i=1;i<POPULATION_SIZE;i++) {
-                	double which=Math.random();
-            		if(which>=MUTATION_PROB) {
-            			int p1Index=-1,p2Index=-1;
-            			while(p1Index==p2Index) {
-            				p1Index=select();
-            				p2Index=select();
-            			}
-            			double[][][] offsprings=crossover(p1Index,p2Index);
-            			for(int j=0;j<2 && i+j<POPULATION_SIZE;j++) 
-            				newGenGroup[i+j]=offsprings[j];
-            			i++;
-            		}else{
-            			double[][] offspring=mutation(select());
-            			newGenGroup[i]=offspring;
+            for(int i=1;i<POPULATION_SIZE;i++) {
+            	double which=Math.random();
+            	if(which>=MUTATION_PROB) {
+            		int p1Index=-1,p2Index=-1;
+            		while(p1Index==p2Index) {
+            			p1Index=select();
+            			p2Index=select();
             		}
+            		double[][][] offsprings=crossover(p1Index,p2Index);
+            		for(int j=0;j<2 && i+j<POPULATION_SIZE;j++) 
+            			newGenGroup[i+j]=offsprings[j];
+            		i++;
+            	}else{
+            		double[][] offspring=mutation(select());
+            		newGenGroup[i]=offspring;
             	}
+           	}
                 
-                population=newGenGroup;
-//                for(int i=0;i<POPULATION_SIZE;i++) 
-//                	for(int j=0;j<PATTERN_LEN;j++) 
-//                		for(int k=0;k<4;k++) 
-//                			population[i][j][k]=newGenGroup[i][j][k];
+            population=newGenGroup;
                 
-                arrcpy(population[0],tmp);
-                //System.out.println("bestIndex = "+bestIndex);
-                System.out.println(fitness[bestIndex]+Arrays.toString(fitness));
-                evaluate(); //update fitness -> update select()
-    		}
-    		System.out.println("BEST INDIVIDUAL:");
-    		System.out.println(Arrays.deepToString(population[bestIndex]));
-    	}catch(IOException e) {
-    		e.printStackTrace(System.out);
+            arrcpy(population[0],tmp);
+            //System.out.println("bestIndex = "+bestIndex);
+            System.out.println(fitness[bestIndex]+Arrays.toString(fitness));
+            evaluate(); //update fitness -> update select()
     	}
+    	System.out.println("BEST INDIVIDUAL:");
+    	System.out.println(Arrays.deepToString(population[bestIndex]));
     }
     
     /*Roulette selection*/
