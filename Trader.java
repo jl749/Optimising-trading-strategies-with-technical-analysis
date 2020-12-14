@@ -250,7 +250,7 @@ public class Trader
     }
     private int findIndex(int[] signals) { // AABC-AAAA =5
     	int sum=0;
-    	for(int i=0;i<signals.length;i++) {
+    	for(int i=0;i<signals.length;i++) { // it is actually handled opposite AAAB ==> BAAA
     		sum+=(signals[i] * (int)Math.pow(3, i));
     	}
     	return sum;
