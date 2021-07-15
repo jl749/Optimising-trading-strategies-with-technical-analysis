@@ -15,16 +15,8 @@ practical	related	to	EDDIE – available	on	Moodle.
 ## Task 1: Technical Indicators (10%)
 
 **Task 1a**
-Given	the	Moving	Average	(MA)	formula	below,	calculate	the 	12	 days	moving	average.	Once	you	
+Given	the	Moving	Average	(MA),	calculate	the 	12	 days	moving	average.	Once	you	
 are	done	with	this,	also	calculate	the	 26	 days	moving	average.
-
-### 𝑆𝑀𝐴(𝐿, 𝑡)=
-
-### ∑$#%&𝑃!"#
-
-### 𝐿
-
-where	 _t_ is	the	current	price,	and	 _L_ is	the	period	length	(1 2	 or	 26	 days).
 
 **Task 1b**
 Calculate	the	24	days	trade	break	out	rule	(TBR),	given	the	formula	below.
