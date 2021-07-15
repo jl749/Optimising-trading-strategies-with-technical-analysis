@@ -148,3 +148,5 @@ results.	Topics	you	should	cover	in	your	slides:
     present	statistical	analysis	to	support	your	argument.
 - Anything	 else	 you	 consider	 useful	 to	 mention,	 e.g.	 any	 additional	 methods	
     implementation	you	decided	to	implement.
+    
+[original](https://www.dropbox.com/s/fut26bksgcqkwnx/CO656%20-%20Assignment%20%E2%80%93%20Trading.pdf?dl=0)
