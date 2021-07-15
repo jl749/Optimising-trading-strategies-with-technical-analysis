@@ -1,3 +1,4 @@
+# Optimising-trading-strategies-with-technical-analysis
 Your	 task	 is	 to	 implement	 a	 Genetic	 Algorithm	 (GA)	 to	 optimise a	 trading	 strategy	 based	 on	
 technical	indicators.	You	will	need	to	first	calculate	the	value	of	different	trading	signals	and	then	
 use	a	GA	to	combine	their	recommendations	(BUY,	HOLD	and	SELL	signals).
