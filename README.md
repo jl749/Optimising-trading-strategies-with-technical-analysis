@@ -38,10 +38,7 @@ Calculate	the	29	days	volatility	(VOL),	given	the	formula	below.
 
 ### 𝐿∑ 𝑃(𝑡−𝑖)
 
-```
-$
-#%&
-```
+
 where	𝜎 is	the	standard	deviation	for	the	prices	in	the	given	range,	 _t_ is	the	current	price,	and	 _L_
 is	the	period	length	(29	days).
 
